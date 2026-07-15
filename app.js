@@ -248,19 +248,7 @@ function renderDashboard() {
   document.getElementById('ring-kcal').textContent = Math.round(totals.kcal);
   document.getElementById('ring-goal').textContent = `de ${plan.dailyGoal} kcal`;
 
-  document.getElementById('macro-protein-dots').textContent = dots(totals.protein, plan.proteinG);
-  document.getElementById('macro-carbs-dots').textContent = dots(totals.carbs, plan.carbsG);
-  document.getElementById('macro-fat-dots').textContent = dots(totals.fat, plan.fatG);
-  document.getElementById('macro-cereales-dots').textContent = dots(smaeCountForDate(today, 'Cereales y tuberculos'), plan.cerealesPortions);
-  document.getElementById('macro-lacteos-dots').textContent = dots(smaeCountForDate(today, 'Leche'), plan.lacteosPortions);
-
-  document.getElementById('macro-protein-detail').textContent = `${Math.round(totals.protein)}g de ${plan.proteinG}g · quedan ${Math.max(0, plan.proteinG - Math.round(totals.protein))}g`;
-  document.getElementById('macro-carbs-detail').textContent = `${Math.round(totals.carbs)}g de ${plan.carbsG}g · quedan ${Math.max(0, plan.carbsG - Math.round(totals.carbs))}g`;
-  document.getElementById('macro-fat-detail').textContent = `${Math.round(totals.fat)}g de ${plan.fatG}g · quedan ${Math.max(0, plan.fatG - Math.round(totals.fat))}g`;
-  const cerealesNow = smaeCountForDate(today, 'Cereales y tuberculos');
-  document.getElementById('macro-cereales-detail').textContent = `${cerealesNow} de ${plan.cerealesPortions} porciones · quedan ${Math.max(0, plan.cerealesPortions - cerealesNow)}`;
-  const lacteosNow = smaeCountForDate(today, 'Leche');
-  document.getElementById('macro-lacteos-detail').textContent = `${lacteosNow} de ${plan.lacteosPortions} porciones · quedan ${Math.max(0, plan.lacteosPortions - lacteosNow)}`;
+  renderMacroPortions(plan, today);
 
   document.getElementById('weight-value').textContent = plan.weight ? `${plan.weight.toFixed(1)} kg` : 'Sin datos';
   const wSpark = document.getElementById('weight-sparkline');
@@ -306,6 +294,25 @@ function renderDashboard() {
   document.getElementById('week-objective').textContent = `Objetivo -${Math.round(plan.deficitPerDay * 7)} kcal/sem`;
 
   renderProgressChart(plan);
+}
+
+/* ---------- Porciones disponibles por grupo (dashboard) ---------- */
+const DOT_COLORS = ['dots-green', 'dots-coral', 'dots-amber', 'dots-purple', 'dots-teal', 'dots-blue', 'dots-gray', 'dots-pink'];
+
+function renderMacroPortions(plan, today) {
+  const listEl = document.getElementById('macro-list');
+  listEl.innerHTML = '';
+  SMAE_GROUPS.forEach((g, i) => {
+    const goal = goalForGroup(plan, g.key);
+    const current = smaeCountForDate(today, g.key);
+    const row = document.createElement('div');
+    row.className = 'macro';
+    row.innerHTML = `
+      <div class="macro-top"><span class="macro-label">${g.label}</span><span class="macro-dots ${DOT_COLORS[i % DOT_COLORS.length]}">${dots(current, goal)}</span></div>
+      <p class="macro-detail" style="display:none;">${current} de ${goal} porciones · quedan ${Math.max(0, goal - current)}</p>
+    `;
+    listEl.appendChild(row);
+  });
 }
 
 /* ---------- Grafica de progreso global (peso vs meta, en el tiempo) ---------- */
@@ -640,7 +647,18 @@ async function searchFood(query) {
         'fat_100g': fat100
       }
     };
-    resultsEl.appendChild(foodRow(name, kcal100, defGrams, () => openFoodQtyModal(product, defGrams)));
+    const kcalPortion = Math.round(kcal100 * defGrams / 100);
+    const row = document.createElement('div');
+    row.className = 'food-row';
+    row.innerHTML = `
+      <div class="food-info">
+        <p class="food-name">${name}</p>
+        <p class="group-example">1 porcion ≈ ${defGrams}g · ${kcalPortion} kcal</p>
+      </div>
+      <button class="add-food-btn">Agregar</button>
+    `;
+    row.querySelector('.add-food-btn').addEventListener('click', () => openFoodQtyModal(product, defGrams, group));
+    resultsEl.appendChild(row);
   });
 
   if (local.length === 0) {
@@ -655,7 +673,7 @@ async function searchFood(query) {
     if (local.length === 0) resultsEl.innerHTML = '';
     products.slice(0, 8).forEach(p => {
       const kcal100 = p.nutriments['energy-kcal_100g'] || 0;
-      resultsEl.appendChild(foodRow(p.product_name, kcal100, 100, () => openFoodQtyModal(p, 100)));
+      resultsEl.appendChild(foodRow(p.product_name, kcal100, 100, () => openFoodQtyModal(p, null, null)));
     });
     if (local.length === 0 && products.length === 0) {
       resultsEl.innerHTML = '<p class="muted-text" style="padding:8px 4px;">Sin resultados. Prueba otro termino o agrega manual abajo.</p>';
@@ -668,29 +686,51 @@ async function searchFood(query) {
 }
 
 let pendingProduct = null;
+let pendingDefGrams = null;
+let pendingGroup = null;
 
-function openFoodQtyModal(product, defGrams) {
+function openFoodQtyModal(product, defGrams, group) {
   pendingProduct = product;
+  pendingDefGrams = defGrams || null;
+  pendingGroup = group || null;
   document.getElementById('qty-modal-title').textContent = product.product_name;
-  document.getElementById('qty-input').value = defGrams || 100;
+  const label = document.getElementById('qty-label');
+  const hint = document.getElementById('qty-hint');
+  const input = document.getElementById('qty-input');
+  if (pendingDefGrams) {
+    label.textContent = 'Porciones';
+    input.value = 1;
+    input.step = '0.25';
+    const n = product.nutriments;
+    const kcalPortion = Math.round((n['energy-kcal_100g'] || 0) * pendingDefGrams / 100);
+    hint.textContent = `1 porcion ≈ ${pendingDefGrams}g · ${kcalPortion} kcal`;
+  } else {
+    label.textContent = 'Gramos';
+    input.value = 100;
+    input.step = '1';
+    hint.textContent = '';
+  }
   document.getElementById('qty-modal').classList.add('open');
-  document.getElementById('qty-input').focus();
+  input.focus();
 }
 
 function closeQtyModal() {
   document.getElementById('qty-modal').classList.remove('open');
   pendingProduct = null;
+  pendingDefGrams = null;
+  pendingGroup = null;
 }
 
 function confirmQtyModal() {
   if (!pendingProduct) return;
-  const g = Number(document.getElementById('qty-input').value);
-  if (!g || g <= 0) {
+  const qty = Number(document.getElementById('qty-input').value);
+  if (!qty || qty <= 0) {
     toast('Escribe una cantidad valida.');
     return;
   }
+  const grams = pendingDefGrams ? qty * pendingDefGrams : qty;
   const n = pendingProduct.nutriments;
-  const factor = g / 100;
+  const factor = grams / 100;
   const meal = {
     date: todayStr(),
     name: pendingProduct.product_name,
@@ -700,10 +740,14 @@ function confirmQtyModal() {
     fat: Math.round((n['fat_100g'] || 0) * factor)
   };
   state.meals.push(meal);
+  if (pendingGroup && pendingDefGrams) {
+    state.smaeLog.push({ date: todayStr(), group: pendingGroup, count: qty });
+  }
   saveData();
   renderRecentMeals();
   renderDashboard();
-  toast(`Agregado: ${meal.name} (${meal.kcal} kcal)`);
+  const qtyLabel = pendingDefGrams ? `${qty} porcion${qty === 1 ? '' : 'es'}` : `${grams}g`;
+  toast(`Agregado: ${meal.name} (${qtyLabel}, ${meal.kcal} kcal)`);
   closeQtyModal();
 }
 
