@@ -214,7 +214,7 @@ html, body {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 4px; border-bottom: 0.5px solid var(--border);
 }
-.group-icon { font-size: 18px; color: var(--accent); }
+.group-icon { display: inline-flex; flex-shrink: 0; color: var(--accent); }
 .group-info { flex: 1; }
 .group-name { font-size: 13px; margin: 0; }
 .group-example { font-size: 10px; color: var(--text-muted); margin: 0; }
