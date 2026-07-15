@@ -91,6 +91,9 @@ html, body {
 .dots-amber { color: #A06A0E; }
 .dots-purple { color: #4A4293; }
 .dots-pink { color: #A0466C; }
+.dots-green { color: #4F8A2E; }
+.dots-teal { color: #0F6E56; }
+.dots-gray { color: #6B6B65; }
 .macro-detail { font-size: 11px; color: var(--text-muted); margin: 2px 0 0; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }

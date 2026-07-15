@@ -72,28 +72,7 @@
           <text x="60" y="55" text-anchor="middle" font-size="27" font-weight="600" fill="var(--text)" id="ring-kcal">0</text>
           <text x="60" y="76" text-anchor="middle" font-size="13" fill="var(--text-secondary)" id="ring-goal">de 0 kcal</text>
         </svg>
-        <div class="macro-list">
-          <div class="macro">
-            <div class="macro-top"><span class="macro-label">Proteina</span><span id="macro-protein-dots" class="macro-dots dots-coral"></span></div>
-            <p class="macro-detail" id="macro-protein-detail" style="display:none;"></p>
-          </div>
-          <div class="macro">
-            <div class="macro-top"><span class="macro-label">Carbos</span><span id="macro-carbs-dots" class="macro-dots dots-blue"></span></div>
-            <p class="macro-detail" id="macro-carbs-detail" style="display:none;"></p>
-          </div>
-          <div class="macro">
-            <div class="macro-top"><span class="macro-label">Grasa</span><span id="macro-fat-dots" class="macro-dots dots-amber"></span></div>
-            <p class="macro-detail" id="macro-fat-detail" style="display:none;"></p>
-          </div>
-          <div class="macro">
-            <div class="macro-top"><span class="macro-label">Cereales</span><span id="macro-cereales-dots" class="macro-dots dots-purple"></span></div>
-            <p class="macro-detail" id="macro-cereales-detail" style="display:none;"></p>
-          </div>
-          <div class="macro">
-            <div class="macro-top"><span class="macro-label">Lacteos</span><span id="macro-lacteos-dots" class="macro-dots dots-pink"></span></div>
-            <p class="macro-detail" id="macro-lacteos-detail" style="display:none;"></p>
-          </div>
-        </div>
+        <div class="macro-list" id="macro-list"></div>
       </div>
 
       <div class="grid-2">
@@ -281,8 +260,9 @@
   <div id="qty-modal" class="modal-overlay">
     <div class="modal-box">
       <p class="title-md" id="qty-modal-title">Alimento</p>
-      <label class="field-label">Cantidad (gramos)</label>
-      <input id="qty-input" class="field" type="number" value="100">
+      <label class="field-label" id="qty-label">Porciones</label>
+      <input id="qty-input" class="field" type="number" step="0.25" value="1">
+      <p class="muted-text" id="qty-hint" style="font-size:11px;margin:6px 0 0;"></p>
       <div style="display:flex;gap:8px;margin-top:14px;">
         <button id="qty-modal-cancel" class="btn-secondary" style="flex:1;">Cancelar</button>
         <button id="qty-modal-confirm" class="btn-primary" style="flex:1;">Agregar</button>
